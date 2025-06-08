@@ -1,0 +1,66 @@
+{
+  "name": "f1-pivot-table",
+  "version": "1.0.0",
+  "description": "F1 Racing Data Analysis with PivotTable.js - Mobile-compatible analytics for Formula 1 statistics",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server --port=8080 --host=0.0.0.0 --no-browser",
+    "dev": "live-server --port=8080 --host=0.0.0.0 --watch=. --no-browser",
+    "serve": "http-server -p 8080 -a 0.0.0.0 -o",
+    "serve-python": "python -m http.server 8000",
+    "format": "prettier --write \"**/*.{js,html,css,json}\"",
+    "format:check": "prettier --check \"**/*.{js,html,css,json}\"",
+    "json-server": "json-server --watch data/db.json --port 3000 --host 0.0.0.0",
+    "build": "echo 'No build step required for static files'",
+    "deploy": "git add . && git commit -m 'Deploy update' && git push origin main",
+    "backup": "tar -czf ../f1-backup-$(date +%Y%m%d-%H%M%S).tar.gz .",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
+  },
+  "keywords": [
+    "f1",
+    "formula1",
+    "formula-one",
+    "racing",
+    "motorsport",
+    "pivot",
+    "pivottable",
+    "data-analysis",
+    "visualization",
+    "analytics",
+    "statistics",
+    "mobile-web-app"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/f1-pivot-table.git"
+  },
+  "homepage": "https://YOUR_USERNAME.github.io/f1-pivot-table",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "http-server": "^14.1.1",
+    "prettier": "^3.0.0",
+    "json-server": "^0.17.3"
+  },
+  "dependencies": {
+    "jquery": "^3.7.0",
+    "pivottable": "^2.23.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "> 1%",
+    "not dead"
+  ],
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2
+  }
+}
