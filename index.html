@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PivotTable Mobile App - Enhanced</title>
+    
+    <!-- Use local packages if available, fallback to CDN -->
+    <script>
+        // Check if we're running from local server with npm packages
+        function loadScript(localPath, cdnPath) {
+            var script = document.createElement('script');
+            script.onerror = function() {
+                // If local fails, load from CDN
+                script.src = cdnPath;
+                document.head.appendChild(script);
+            };
+            script.src = localPath;
+            document.head.appendChild(script);
+        }
+        
+        function loadCSS(localPath, cdnPath) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.onerror = function() {
+                link.href = cdnPath;
+            };
+            link.href = localPath;
+            document.head.appendChild(link);
+        }
+    </script>
+    
+    <!-- jQuery and jQuery UI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    
+    <!-- jQuery UI Touch Punch for mobile support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    
+    <!-- PivotTable.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
+    
+    <!-- Charts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/c3_renderers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/export_renderers.min.js"></script>
+    
+    <!-- Additional libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.11/jquery.csv.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PivotTable Analytics</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Local Server</span>
+            </div>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="loadSampleData()">
+                    <i class="icon">📊</i> Sample Data
+                </button>
+                <button class="btn btn-secondary" onclick="loadFromServer()">
+                    <i class="icon">🔄</i> Server Data
+                </button>
+                <button class="btn btn-danger" onclick="resetPivot()">
+                    <i class="icon">🔄</i> Reset
+                </button>
+            </div>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.json" onchange="handleFileUpload(event)" multiple>
+                <label for="fileInput" class="file-input-label">
+                    <i class="icon">📁</i> Upload Files (CSV/Excel/JSON)
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn btn-info" onclick="saveConfiguration()">
+                    <i class="icon">💾</i> Save Config
+                </button>
+                <button class="btn btn-info" onclick="loadConfiguration()">
+                    <i class="icon">📂</i> Load Config
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-panel" id="infoPanel">
+            <div class="info-item">
+                <strong>Records:</strong> <span id="recordCount">0</span>
+            </div>
+            <div class="info-item">
+                <strong>Columns:</strong> <span id="columnCount">0</span>
+            </div>
+            <div class="info-item">
+                <strong>Server:</strong> <span id="serverInfo">Not connected</span>
+            </div>
+        </div>
+        
+        <div id="output">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Ready to analyze your data</p>
+                <p class="sub-text">Load sample data or upload your own files</p>
+            </div>
+        </div>
+        
+        <div id="console" class="console-panel">
+            <h3>Console Output</h3>
+            <div id="consoleOutput"></div>
+        </div>
+    </div>
+    
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Load application JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+    
+    <style>
+        /* Enhanced styles for Termux development */
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0f0f15;
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #1a1a25;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            background: linear-gradient(45deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 15px;
+            background: #1a1a25;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #1a1a25;
+            color: #e0e0e0;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #0099ff, #00d4ff);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #2a2a35;
+        }
+        
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .btn-info {
+            background: #4a4a55;
+        }
+        
+        .icon {
+            font-style: normal;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #00ff88, #00d4aa);
+            color: #0f0f15;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+        }
+        
+        .info-panel {
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: #1a1a25;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .info-item strong {
+            color: #00d4ff;
+        }
+        
+        #output {
+            background: #1a1a25;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            overflow: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #2a2a35;
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .sub-text {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .console-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0a0a10;
+            border: 1px solid #1a1a25;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .console-panel h3 {
+            margin: 0 0 10px 0;
+            color: #00d4ff;
+            font-size: 14px;
+        }
+        
+        #consoleOutput {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .console-log { color: #e0e0e0; }
+        .console-error { color: #ff4444; }
+        .console-success { color: #00ff88; }
+        .console-info { color: #00d4ff; }
+        
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: #00d4ff;
+            color: #0f0f15;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: bottom 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            bottom: 30px;
+        }
+        
+        /* PivotTable customizations */
+        .pvtUi {
+            color: #333;
+        }
+        
+        .pvtTable {
+            background: white;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .control-group {
+                width: 100%;
+            }
+            
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            .info-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .pvtUi {
+                zoom: 0.8;
+            }
+        }
+    </style>
+</body>
+</html>
