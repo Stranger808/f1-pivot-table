@@ -154,22 +154,6 @@
     border-color: var(--accent-green) !important;
 }
 
-/* Enhanced pivot table text visibility */
-.pvtAxisContainer li,
-.pvtAxisContainer li span,
-.pvtAxisContainer .pvtAttr {
-    color: var(--text-primary) !important;
-    background: var(--bg-secondary) !important;
-}
-
-/* Ensure text is visible in all states */
-.pvtUnused li,
-.pvtRows li,
-.pvtCols li {
-    color: var(--text-primary) !important;
-    background: var(--bg-secondary) !important;
-}
-
 /* Table styles */
 .pvtTable {
     border-collapse: separate;
@@ -204,62 +188,6 @@
     font-weight: bold !important;
     background: var(--accent-blue) !important;
     color: var(--bg-primary) !important;
-}
-
-/* Style the aggregation controls container */
-.pvtVals {
-    background: var(--bg-secondary) !important;
-}
-
-/* Style the table cell containing aggregation controls */
-.pvtUi .pvtVals td {
-    background: var(--bg-secondary) !important;
-}
-
-/* More specific targeting for the aggregation area */
-.pvtUi td.pvtVals,
-.pvtUi .pvtVals .pvtAttr {
-    background: var(--bg-secondary) !important;
-}
-
-/* Style the sorting triangle buttons */
-.pvtTriangle {
-    color: var(--text-primary) !important;
-    opacity: 0.8;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
-}
-
-.pvtTriangle:hover {
-    opacity: 1;
-    color: var(--accent-blue) !important;
-}
-
-/* Make the aggregation container corners rounded */
-.pvtVals,
-.pvtVals td {
-    border-radius: 8px !important;
-}
-
-/* Style any buttons or controls in the aggregation area */
-.pvtVals button,
-.pvtVals .pvtButton {
-    color: var(--text-primary) !important;
-    background: transparent !important;
-    border: none !important;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.pvtVals button:hover,
-.pvtVals .pvtButton:hover {
-    color: var(--accent-blue) !important;
-}
-
-/* Additional styling for any other control elements */
-.pvtVals span,
-.pvtVals a {
-    color: var(--text-primary) !important;
 }
 
 /* Dropdown styles */
