@@ -1,0 +1,25 @@
+id,reference,name,driver_position_points,driver_fastest_lap,team_position_points,team_fastest_lap,partial,shared_drive,is_double_points
+1,No Points,Session with no Points Awarded,0,0,0,0,0,0,f
+2,r1950,1950-1953 Race Points,1,1,0,0,0,1,f
+3,r1954,1954 Race Points,1,2,0,0,0,1,f
+4,r1955,1955 Race Points,1,2,0,0,0,2,f
+5,r1956,1956 - 1957 Race Points,1,2,0,0,0,3,f
+6,r1958,1958 - 1959 Race Points,1,2,1,0,0,0,f
+7,r1958indi,1958 - 1959 Indianapolis Points,1,2,0,0,0,0,f
+8,r1960,1960 Race Points,2,0,2,0,0,0,f
+9,r1960indi,1960 Indianapolis Points,2,0,0,0,0,0,f
+10,r1961,1961 Race Points,3,0,2,0,0,0,f
+11,r1962,1962 - 1974 Race Points,3,0,3,0,0,0,f
+12,r1975,1975 - 1979 Race Points,3,0,3,0,1,0,f
+13,r1980,1980 - 1990 Race Points,3,0,3,0,2,0,f
+14,r1991,1991 - 2002 Race Points,5,0,5,0,2,0,f
+15,r2003,2003 - 2009 Race Points,6,0,6,0,2,0,f
+16,r2010,2010 - 2018 Race Points,7,0,7,0,2,0,f
+17,r2014double,2014 Double Race Points,7,0,7,0,2,0,t
+18,r2019,2019 - 2021 Race Points,7,3,7,3,2,0,f
+19,sprint2021,2021 Sprint Points,21,0,21,0,2,0,f
+20,r2022,2022 Race Points,7,4,7,4,3,0,f
+21,sprint2022,2022 Sprint Points,22,0,22,0,3,0,f
+22,r2023,2023 - 2024 Race Points,7,4,7,4,4,0,f
+23,sprint2023,2023 - Present Sprint Points,22,0,22,0,4,0,f
+24,r2025,2025 - Present Race Points,7,0,7,0,4,0,f

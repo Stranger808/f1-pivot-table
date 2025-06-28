@@ -1,4 +1,4 @@
-/* styles.css - Enhanced styles for PivotTable app */
+/* styles.css - Enhanced styles for PivotTable app with filtering */
 
 /* CSS Variables for easy theming */
 :root {
@@ -42,6 +42,12 @@
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes filterPulse {
+    0% { background-color: var(--accent-blue); }
+    50% { background-color: var(--accent-green); }
+    100% { background-color: var(--accent-blue); }
 }
 
 /* Scrollbar styling */
@@ -141,6 +147,7 @@
     border-radius: 6px;
     color: var(--text-primary) !important;
     transition: all 0.2s ease;
+    cursor: pointer !important;
 }
 
 .pvtAxisContainer li:hover {
@@ -152,6 +159,240 @@
 .pvtAxisContainer li.ui-state-highlight {
     background: var(--accent-green) !important;
     border-color: var(--accent-green) !important;
+}
+
+/* Filter indicator styles */
+.pvtAxisContainer li.has-filter {
+    background: linear-gradient(45deg, var(--bg-secondary), var(--accent-blue)) !important;
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.filter-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--accent-orange);
+    color: var(--bg-primary);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    animation: filterPulse 2s infinite;
+    pointer-events: none;
+}
+
+/* Filter dropdown styles */
+.filter-dropdown {
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-blue);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 10000;
+    min-width: 320px;
+    max-width: 90vw;
+    animation: slideIn 0.3s ease;
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--accent-blue);
+    color: var(--bg-primary);
+    margin: 0;
+}
+
+.filter-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.filter-close {
+    background: none;
+    border: none;
+    color: var(--bg-primary);
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.filter-close:hover {
+    background: rgba(15, 15, 21, 0.2);
+}
+
+.filter-content {
+    padding: 20px;
+}
+
+.filter-section {
+    margin-bottom: 20px;
+}
+
+.filter-section label:first-child {
+    display: block;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-bottom: 10px;
+}
+
+/* Range filter styles */
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.range-inputs input[type="number"] {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.range-inputs input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.range-inputs span {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Categorical filter styles */
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.filter-controls button {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.filter-controls button:hover {
+    background: var(--accent-blue);
+    color: var(--bg-primary);
+    border-color: var(--accent-blue);
+}
+
+.values-list {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.value-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.value-item:hover {
+    background: var(--bg-secondary);
+}
+
+.value-item input[type="checkbox"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-blue);
+    cursor: pointer;
+}
+
+.value-item span {
+    flex: 1;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+/* Filter stats */
+.filter-stats {
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Filter actions */
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+}
+
+.filter-actions .btn {
+    flex: 1;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-actions .btn-primary {
+    background: var(--accent-blue);
+    color: var(--bg-primary);
+}
+
+.filter-actions .btn-primary:hover {
+    background: var(--accent-green);
+    transform: translateY(-1px);
+}
+
+.filter-actions .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.filter-actions .btn-secondary:hover {
+    background: var(--accent-red);
+    color: white;
+    border-color: var(--accent-red);
 }
 
 /* Enhanced pivot table text visibility */
@@ -308,6 +549,7 @@ textarea:focus {
     .pvtAxisContainer li {
         padding: 12px !important;
         font-size: 14px;
+        min-height: 44px; /* iOS recommended touch target */
     }
     
     /* Sticky header for mobile */
@@ -316,6 +558,36 @@ textarea:focus {
         top: 0;
         z-index: 100;
         background: var(--bg-primary);
+    }
+    
+    /* Mobile filter dropdown adjustments */
+    .filter-dropdown {
+        position: fixed;
+        left: 10px !important;
+        right: 10px !important;
+        top: 50% !important;
+        transform: translateY(-50%);
+        max-width: none;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .filter-content {
+        padding: 15px;
+    }
+    
+    .range-inputs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .range-inputs span {
+        text-align: center;
+        margin: 5px 0;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
     }
     
     /* Bottom navigation for mobile */
@@ -353,6 +625,21 @@ textarea:focus {
     .pvtUi {
         zoom: 0.9;
     }
+    
+    .filter-dropdown {
+        max-width: 400px;
+    }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+    .filter-dropdown {
+        min-width: 380px;
+    }
+    
+    .values-list {
+        max-height: 300px;
+    }
 }
 
 /* Print styles */
@@ -364,7 +651,8 @@ textarea:focus {
     
     .controls, 
     .console-panel, 
-    header {
+    header,
+    .filter-dropdown {
         display: none !important;
     }
     
@@ -392,6 +680,12 @@ textarea:focus {
     outline-offset: 2px;
 }
 
+.pvtAxisContainer li:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     :root {
@@ -399,5 +693,18 @@ textarea:focus {
         --bg-secondary: #1a1a1a;
         --text-primary: #ffffff;
         --accent-blue: #00ffff;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .filter-indicator {
+        animation: none;
     }
 }
