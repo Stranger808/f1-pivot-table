@@ -131,6 +131,19 @@
 /* Pivot table specific styles */
 .pvtUi {
     animation: fadeIn 0.3s ease;
+    max-height: 70vh; /* Set maximum height to 70% of viewport */
+    overflow-y: auto; /* Add vertical scroll when content exceeds max height */
+    overflow-x: auto; /* Add horizontal scroll for wide tables */
+}
+
+/* Ensure the output container also has proper sizing */
+#output {
+    background: #1a1a25;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 400px;
+    max-height: 75vh; /* Slightly larger than pvtUi to account for padding */
+    overflow: auto;
 }
 
 .pvtAxisContainer {
@@ -148,6 +161,18 @@
     color: var(--text-primary) !important;
     transition: all 0.2s ease;
     cursor: pointer !important;
+    position: relative !important; /* Important for filter indicator positioning */
+    -webkit-user-select: none; /* Prevent text selection during drag */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Dragging state */
+.pvtAxisContainer li.ui-draggable-dragging {
+    opacity: 0.8;
+    cursor: move !important;
+    z-index: 1000;
 }
 
 .pvtAxisContainer li:hover {
@@ -161,7 +186,7 @@
     border-color: var(--accent-green) !important;
 }
 
-/* Filter indicator styles */
+/* Filter indicator styles - Fixed positioning */
 .pvtAxisContainer li.has-filter {
     background: linear-gradient(45deg, var(--bg-secondary), var(--accent-blue)) !important;
     border-color: var(--accent-blue) !important;
@@ -170,20 +195,22 @@
 
 .filter-indicator {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -8px;
+    right: -8px;
     background: var(--accent-orange);
     color: var(--bg-primary);
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: bold;
     animation: filterPulse 2s infinite;
     pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 /* Filter dropdown styles */
@@ -403,12 +430,41 @@
     background: var(--bg-secondary) !important;
 }
 
+/* Fix for jQuery UI draggable states */
+.pvtAxisContainer li.ui-draggable,
+.pvtAxisContainer li.ui-draggable-handle,
+.pvtAxisContainer li.ui-state-default,
+.pvtAxisContainer li.ui-state-hover,
+.pvtAxisContainer li.ui-state-active,
+.pvtAxisContainer li.ui-state-focus {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    opacity: 1 !important;
+}
+
+/* Override jQuery UI styles */
+.pvtAxisContainer .ui-widget-content {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
 /* Ensure text is visible in all states */
 .pvtUnused li,
 .pvtRows li,
 .pvtCols li {
     color: var(--text-primary) !important;
     background: var(--bg-secondary) !important;
+}
+
+/* Dragging state with better visibility */
+.pvtAxisContainer li.ui-draggable-dragging {
+    opacity: 0.9 !important;
+    cursor: move !important;
+    z-index: 1000;
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
+    transform: scale(1.05) !important;
 }
 
 /* Table styles */
@@ -445,6 +501,22 @@
     font-weight: bold !important;
     background: var(--accent-blue) !important;
     color: var(--bg-primary) !important;
+}
+
+/* Table container for scrolling */
+.pvtRendererArea {
+    max-height: 60vh; /* Limit the height of the rendered table area */
+    overflow: auto;
+    position: relative;
+}
+
+/* Sticky header container */
+.pvtTableContainer {
+    max-height: 600px;
+    overflow: auto;
+    position: relative;
+    border-radius: 8px;
+    background: var(--bg-secondary);
 }
 
 /* Style the aggregation controls container */
@@ -545,6 +617,25 @@ textarea:focus {
 
 /* Mobile-specific enhancements */
 @media (max-width: 768px) {
+    /* Adjust heights for mobile */
+    .pvtUi {
+        max-height: 60vh; /* Smaller on mobile */
+        zoom: 0.8;
+    }
+    
+    #output {
+        max-height: 65vh;
+        min-height: 300px;
+    }
+    
+    .pvtRendererArea {
+        max-height: 50vh;
+    }
+    
+    .pvtTableContainer {
+        max-height: 400px;
+    }
+    
     /* Larger touch targets */
     .pvtAxisContainer li {
         padding: 12px !important;
@@ -590,6 +681,30 @@ textarea:focus {
         flex-direction: column;
     }
     
+    .filter-actions .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    /* Control adjustments */
+    .controls {
+        flex-direction: column;
+    }
+    
+    .control-group {
+        width: 100%;
+    }
+    
+    .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .info-panel {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
     /* Bottom navigation for mobile */
     .mobile-nav {
         position: fixed;
@@ -624,6 +739,15 @@ textarea:focus {
     
     .pvtUi {
         zoom: 0.9;
+        max-height: 65vh;
+    }
+    
+    #output {
+        max-height: 70vh;
+    }
+    
+    .pvtRendererArea {
+        max-height: 55vh;
     }
     
     .filter-dropdown {
@@ -640,6 +764,18 @@ textarea:focus {
     .values-list {
         max-height: 300px;
     }
+    
+    .pvtUi {
+        max-height: 75vh; /* Larger screens can show more */
+    }
+    
+    #output {
+        max-height: 80vh;
+    }
+    
+    .pvtRendererArea {
+        max-height: 65vh;
+    }
 }
 
 /* Print styles */
@@ -652,12 +788,20 @@ textarea:focus {
     .controls, 
     .console-panel, 
     header,
-    .filter-dropdown {
+    .filter-dropdown,
+    .bottom-section {
         display: none !important;
     }
     
     .pvtTable {
         box-shadow: none !important;
+    }
+    
+    .pvtUi,
+    #output,
+    .pvtRendererArea {
+        max-height: none !important;
+        overflow: visible !important;
     }
 }
 

@@ -4,6 +4,8 @@
 let currentData = [];
 let pivotConfig = {};
 let activeFilters = {};
+let justRefreshed = false; // Track if pivot table just refreshed
+let refreshTimeout = null; // Timeout for resetting refresh flag
 
 // Console logging helper
 function log(message, type = 'log') {
@@ -227,131 +229,6 @@ function handleJSONFile(file) {
     reader.readAsText(file);
 }
 
-// Render pivot table
-function renderPivotTable(data) {
-    currentData = data;
-    
-    // Update info panel
-    document.getElementById('recordCount').textContent = data.length;
-    document.getElementById('columnCount').textContent = data.length > 0 ? Object.keys(data[0]).length : 0;
-    
-    // Get all available renderers
-    const renderers = $.extend(
-        $.pivotUtilities.renderers,
-        $.pivotUtilities.c3_renderers,
-        $.pivotUtilities.export_renderers
-    );
-    
-    // Default configuration
-    const defaultConfig = {
-        rows: [],
-        cols: [],
-        vals: [],
-        aggregatorName: "Count",
-        rendererName: "Table",
-        renderers: renderers,
-        rendererOptions: {
-            table: {
-                clickCallback: function(e, value, filters, pivotData) {
-                    log(`Cell clicked: value=${value}, filters=${JSON.stringify(filters)}`, 'info');
-                }
-            },
-            c3: {
-                size: {
-                    width: Math.min(window.innerWidth - 80, 800),
-                    height: 400
-                }
-            }
-        },
-        onRefresh: function(config) {
-            // Save current configuration
-            pivotConfig = config;
-            log('Pivot table updated', 'info');
-            
-            // Apply sticky headers after render
-            setTimeout(function() {
-                applyStickyHeaders();
-            }, 100);
-        }
-    };
-    
-    // Apply saved configuration if exists
-    const finalConfig = $.extend(true, {}, defaultConfig, pivotConfig);
-    
-    // Render the pivot table
-    $("#output").pivotUI(data, finalConfig);
-    
-    // Add touch support
-    addTouchSupport();
-    
-    // Apply sticky headers
-    setTimeout(function() {
-        applyStickyHeaders();
-    }, 100);
-    
-    log('Pivot table rendered successfully', 'success');
-}
-
-// Apply sticky headers to the pivot table
-function applyStickyHeaders() {
-    // Find the rendered pivot table
-    const $pvtTable = $('.pvtTable');
-    if ($pvtTable.length === 0) return;
-    
-    // Wrap the table in a scrollable container if not already wrapped
-    if (!$pvtTable.parent().hasClass('pvtTableContainer')) {
-        $pvtTable.wrap('<div class="pvtTableContainer"></div>');
-    }
-    
-    // Set container styles
-    $('.pvtTableContainer').css({
-        'max-height': '600px',
-        'overflow': 'auto',
-        'position': 'relative',
-        'border-radius': '8px',
-        'background': 'var(--bg-secondary)'
-    });
-    
-    // Handle multi-level column headers
-    let cumulativeHeight = 0;
-    $pvtTable.find('thead tr').each(function(index) {
-        const $row = $(this);
-        const rowHeight = $row.outerHeight();
-        
-        // Set the sticky top position for all th elements in this row
-        $row.find('th').each(function() {
-            $(this).css({
-                'position': 'sticky',
-                'top': cumulativeHeight + 'px',
-                'z-index': 20 - index // Higher rows have higher z-index
-            });
-        });
-        
-        cumulativeHeight += rowHeight;
-    });
-    
-    // Identify and mark row label cells
-    $pvtTable.find('tbody tr').each(function() {
-        const $firstCell = $(this).find('th:first, td:first');
-        if ($firstCell.is('th') || $firstCell.hasClass('pvtRowLabel')) {
-            $firstCell.addClass('pvtStickyRowHeader');
-        }
-    });
-    
-    // Handle corner cells (top-left) for all header rows
-    $pvtTable.find('thead tr').each(function(index) {
-        $(this).find('th:first-child').css({
-            'position': 'sticky',
-            'left': '0',
-            'z-index': 25 - index // Ensure corner cells are on top
-        });
-    });
-    
-    // Ensure proper z-index layering for row headers
-    $pvtTable.find('.pvtStickyRowHeader').css('z-index', '15');
-    
-    log('Sticky headers applied with multi-level support', 'info');
-}
 // Analyze column data types and get unique values
 function analyzeColumn(columnName, data) {
     const values = data.map(row => row[columnName]).filter(val => val != null && val !== '');
@@ -409,14 +286,7 @@ function createFilterDropdown(columnName, analysis, element) {
         content += `
             <div class="filter-section">
                 <label>Range Filter:</label>
-                
-<div class="range-mode">
-    <label><input type="radio" name="rangeMode" value="between" checked> Between</label>
-    <label><input type="radio" name="rangeMode" value="gte"> ≥ Min only</label>
-    <label><input type="radio" name="rangeMode" value="lte"> ≤ Max only</label>
-</div>
-
-<div class="range-inputs">
+                <div class="range-inputs">
                     <input type="number" id="minValue" value="${minVal}" 
                            placeholder="Min (${analysis.min})" step="any">
                     <span>to</span>
@@ -548,12 +418,10 @@ function applyFilter(columnName, isNumeric) {
         const minVal = parseFloat(document.getElementById('minValue').value);
         const maxVal = parseFloat(document.getElementById('maxValue').value);
         
-        const mode = document.querySelector('input[name="rangeMode"]:checked')?.value || 'between';
         if (!isNaN(minVal) || !isNaN(maxVal)) {
             activeFilters[columnName] = {
                 min: isNaN(minVal) ? undefined : minVal,
-                max: isNaN(maxVal) ? undefined : maxVal,
-                mode: mode
+                max: isNaN(maxVal) ? undefined : maxVal
             };
         }
     }
@@ -599,18 +467,11 @@ function applyAllFilters(data) {
                 // Numeric filter
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue)) {
-                    switch (filter.mode) {
-                        case 'gte':
-                            if (filter.min !== undefined && numValue < filter.min) return false;
-                            break;
-                        case 'lte':
-                            if (filter.max !== undefined && numValue > filter.max) return false;
-                            break;
-                        case 'between':
-                        default:
-                            if (filter.min !== undefined && numValue < filter.min) return false;
-                            if (filter.max !== undefined && numValue > filter.max) return false;
-                            break;
+                    if (filter.min !== undefined && numValue < filter.min) {
+                        return false;
+                    }
+                    if (filter.max !== undefined && numValue > filter.max) {
+                        return false;
                     }
                 }
             }
@@ -654,12 +515,24 @@ function renderPivotTableWithData(data) {
             }
         },
         onRefresh: function(config) {
+            // Mark that we just refreshed
+            justRefreshed = true;
+            clearTimeout(refreshTimeout);
+            
             // Save current configuration
             pivotConfig = config;
             log('Pivot table updated', 'info');
             
             // Re-attach filter event handlers after refresh
-            setTimeout(attachFilterHandlers, 100);
+            setTimeout(function() {
+                attachFilterHandlers();
+                updateFilterIndicators();
+            }, 200);
+            
+            // Reset the refresh flag after a delay
+            refreshTimeout = setTimeout(() => {
+                justRefreshed = false;
+            }, 300); // 300ms should be enough for all events to settle
         }
     };
     
@@ -669,9 +542,8 @@ function renderPivotTableWithData(data) {
     // Render the pivot table
     $("#output").pivotUI(data, finalConfig);
     
-    // Add touch support and filter handlers
+    // Add touch support
     addTouchSupport();
-    setTimeout(attachFilterHandlers, 100);
     
     log('Pivot table rendered with filtered data', 'success');
 }
@@ -681,33 +553,114 @@ function renderPivotTable(data) {
     currentData = data;
     activeFilters = {}; // Reset filters when loading new data
     renderPivotTableWithData(data);
-    setTimeout(attachFilterHandlers, 100);  // Add this
+    
+    // Attach filter handlers after the pivot table is rendered
+    setTimeout(function() {
+        attachFilterHandlers();
+    }, 500);
+}
+
+// Apply sticky headers to the pivot table
+function applyStickyHeaders() {
+    // Find the rendered pivot table
+    const $pvtTable = $('.pvtTable');
+    if ($pvtTable.length === 0) return;
+    
+    // Wrap the table in a scrollable container if not already wrapped
+    if (!$pvtTable.parent().hasClass('pvtTableContainer')) {
+        $pvtTable.wrap('<div class="pvtTableContainer"></div>');
+    }
+    
+    // Set container styles
+    $('.pvtTableContainer').css({
+        'max-height': '600px',
+        'overflow': 'auto',
+        'position': 'relative',
+        'border-radius': '8px',
+        'background': 'var(--bg-secondary)'
+    });
+    
+    // Handle multi-level column headers
+    let cumulativeHeight = 0;
+    $pvtTable.find('thead tr').each(function(index) {
+        const $row = $(this);
+        const rowHeight = $row.outerHeight();
+        
+        // Set the sticky top position for all th elements in this row
+        $row.find('th').each(function() {
+            $(this).css({
+                'position': 'sticky',
+                'top': cumulativeHeight + 'px',
+                'z-index': 20 - index // Higher rows have higher z-index
+            });
+        });
+        
+        cumulativeHeight += rowHeight;
+    });
+    
+    // Identify and mark row label cells
+    $pvtTable.find('tbody tr').each(function() {
+        const $firstCell = $(this).find('th:first, td:first');
+        if ($firstCell.is('th') || $firstCell.hasClass('pvtRowLabel')) {
+            $firstCell.addClass('pvtStickyRowHeader');
+        }
+    });
+    
+    // Handle corner cells (top-left) for all header rows
+    $pvtTable.find('thead tr').each(function(index) {
+        $(this).find('th:first-child').css({
+            'position': 'sticky',
+            'left': '0',
+            'z-index': 25 - index // Ensure corner cells are on top
+        });
+    });
+    
+    // Ensure proper z-index layering for row headers
+    $pvtTable.find('.pvtStickyRowHeader').css('z-index', '15');
+    
+    log('Sticky headers applied with multi-level support', 'info');
 }
 
 // Attach filter event handlers to attribute elements
 function attachFilterHandlers() {
-    $('.pvtAxisContainer li').off('click.filter touchend.filter');
+    log('Attaching filter handlers', 'info');
     
-    $('.pvtAxisContainer li').on('click.filter touchend.filter', function(e) {
-        if ($(this).hasClass('ui-draggable-dragging')) return;
-
-        setTimeout(() => {
-            if (!$(this).hasClass('ui-draggable-dragging')) {
-                const rawText = $(this).text().trim();
-                const columnName = $(this).data("attrName") || rawText.replace(/[▾▲▼⇅↕↔]/g, '').trim();
-                console.log("Clicked:", columnName);
-                console.log("Available keys:", Object.keys(currentData[0]));
-
+    // Try using mousedown instead of click
+    $('.pvtAxisContainer li').off('mousedown.filter').on('mousedown.filter', function(e) {
+        // Only handle left mouse button
+        if (e.which !== 1) return;
+        
+        log('Mousedown detected', 'info');
+        
+        // Store the element and position
+        const $element = $(this);
+        const startX = e.pageX;
+        const startY = e.pageY;
+        
+        // Watch for mouseup
+        $(document).one('mouseup.filter', function(upEvent) {
+            const endX = upEvent.pageX;
+            const endY = upEvent.pageY;
+            const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            
+            log(`Mouse released. Distance moved: ${distance}`, 'info');
+            
+            // If mouse moved less than 5 pixels, treat as click
+            if (distance < 5 && !justRefreshed) {
+                const rawText = $element.text().trim();
+                const columnName = rawText.replace(/[▾▲▼⇅↕↔]/g, '').trim();
+                
+                log(`Column clicked: ${columnName}`, 'info');
+                
                 if (columnName && currentData.length > 0) {
                     const analysis = analyzeColumn(columnName, currentData);
-                    createFilterDropdown(columnName, analysis, this);
-                    e.stopPropagation();
+                    createFilterDropdown(columnName, analysis, $element[0]);
                 }
             }
-        }, 200);
+        });
     });
-
-    updateFilterIndicators();
+    
+    log(`Attached handlers to ${$('.pvtAxisContainer li').length} elements`, 'info');
 }
 
 // Update visual indicators for filtered columns
@@ -727,6 +680,25 @@ function updateFilterIndicators() {
         }
     });
 }
+
+// Update visual indicators for filtered columns
+function updateFilterIndicators() {
+    $('.pvtAxisContainer li').each(function() {
+        const columnName = $(this).text().trim();
+        const $indicator = $(this).find('.filter-indicator');
+        
+        if (activeFilters[columnName]) {
+            if ($indicator.length === 0) {
+                $(this).append('<span class="filter-indicator">🔍</span>');
+                $(this).addClass('has-filter');
+            }
+        } else {
+            $indicator.remove();
+            $(this).removeClass('has-filter');
+        }
+    });
+}
+
 // Add touch support for mobile
 function addTouchSupport() {
     // Make draggable elements more touch-friendly
@@ -748,6 +720,7 @@ function addTouchSupport() {
 // Reset pivot table
 function resetPivot() {
     pivotConfig = {};
+    activeFilters = {};
     $("#output").html(`
         <div class="loading">
             <div class="spinner"></div>
@@ -770,6 +743,7 @@ function saveConfiguration() {
     
     const config = {
         pivotConfig: pivotConfig,
+        activeFilters: activeFilters,
         timestamp: new Date().toISOString(),
         dataInfo: {
             records: currentData.length,
@@ -803,9 +777,11 @@ function loadConfiguration() {
             try {
                 const config = JSON.parse(e.target.result);
                 pivotConfig = config.pivotConfig || {};
+                activeFilters = config.activeFilters || {};
                 
                 if (currentData.length > 0) {
-                    renderPivotTable(currentData);
+                    const filteredData = applyAllFilters(currentData);
+                    renderPivotTableWithData(filteredData);
                     log('Configuration loaded and applied', 'success');
                     showToast('Configuration loaded!');
                 } else {
@@ -834,7 +810,8 @@ $(window).on('resize', function() {
                     width: Math.min(window.innerWidth - 80, 800),
                     height: 400
                 };
-                renderPivotTable(currentData);
+                const filteredData = applyAllFilters(currentData);
+                renderPivotTableWithData(filteredData);
             }
         }
     }, 250);
@@ -868,6 +845,8 @@ $(document).ready(function() {
         }
     });
 });
+
+// Make functions globally accessible for onclick handlers
 window.removeFilterDropdown = removeFilterDropdown;
 window.selectAllValues = selectAllValues;
 window.deselectAllValues = deselectAllValues;
