@@ -7,7 +7,7 @@ node_modules/
 Thumbs.db
 
 # IDE files
-.vscode/
+#.vscode/
 #.idea/
 
 # Logs
@@ -15,7 +15,7 @@ Thumbs.db
 npm-debug.log*
 
 # Environment variables
-.env
+#.env
 #.env.local
 
 # Temporary files
