@@ -27,6 +27,22 @@
     }
 }
 
+/* Hide PivotTable.js built-in filter box only */
+.pvtFilterBox {
+    display: none !important;
+}
+
+/* Make triangles less prominent but keep them for sorting */
+.pvtTriangle {
+    opacity: 0.3;
+    font-size: 10px;
+}
+
+/* Custom cursor for our filter areas */
+.pvtAxisContainer li span.pvtAttr {
+    cursor: pointer !important;
+}
+
 /* Animations */
 @keyframes slideIn {
     from {

@@ -287,8 +287,12 @@ function handleJSONFile(file) {
 
 // Analyze column data types and get unique values
 function analyzeColumn(columnName, data) {
+    log(`Analyzing column: ${columnName}`, 'info');
+    
     const values = data.map(row => row[columnName]).filter(val => val != null && val !== '');
     const uniqueValues = [...new Set(values)];
+    
+    log(`Found ${values.length} non-null values, ${uniqueValues.length} unique`, 'info');
     
     // Determine if column is numeric
     const numericValues = values.filter(val => !isNaN(val) && val !== '');
@@ -306,6 +310,9 @@ function analyzeColumn(columnName, data) {
         analysis.min = Math.min(...nums);
         analysis.max = Math.max(...nums);
         analysis.avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+        log(`Numeric column: min=${analysis.min}, max=${analysis.max}, avg=${analysis.avg}`, 'info');
+    } else {
+        log(`Categorical column with values: ${uniqueValues.slice(0, 5).join(', ')}${uniqueValues.length > 5 ? '...' : ''}`, 'info');
     }
     
     return analysis;
@@ -681,66 +688,133 @@ function applyStickyHeaders() {
 function attachFilterHandlers() {
     log('Attaching filter handlers', 'info');
     
-    // Try using mousedown instead of click
-    $('.pvtAxisContainer li').off('mousedown.filter').on('mousedown.filter', function(e) {
-        // Only handle left mouse button
-        if (e.which !== 1) return;
-        
-        log('Mousedown detected', 'info');
-        
-        // Store the element and position
-        const $element = $(this);
-        const startX = e.pageX;
-        const startY = e.pageY;
-        
-        // Watch for mouseup
-        $(document).one('mouseup.filter', function(upEvent) {
-            const endX = upEvent.pageX;
-            const endY = upEvent.pageY;
-            const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-            
-            log(`Mouse released. Distance moved: ${distance}`, 'info');
-            
-            // If mouse moved less than 5 pixels, treat as click
-            if (distance < 5 && !justRefreshed) {
-                const rawText = $element.text().trim();
-                const columnName = rawText.replace(/[▾▲▼⇅↕↔]/g, '').trim();
-                
-                log(`Column clicked: ${columnName}`, 'info');
-                
-                if (columnName && currentData.length > 0) {
-                    const analysis = analyzeColumn(columnName, currentData);
-                    createFilterDropdown(columnName, analysis, $element[0]);
-                }
-            }
-        });
+    // Use event delegation on parent container to intercept triangle clicks
+    $('.pvtUi').off('click.triangleFilter').on('click.triangleFilter', '.pvtTriangle', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        log('Triangle click intercepted and prevented', 'info');
+        return false;
     });
     
-    log(`Attached handlers to ${$('.pvtAxisContainer li').length} elements`, 'info');
-}
-
-// Update visual indicators for filtered columns
-function updateFilterIndicators() {
-    $('.pvtAxisContainer li').each(function() {
-        const columnName = $(this).text().trim();
-        const $indicator = $(this).find('.filter-indicator');
+    // Add our custom click handler with a slight delay to ensure it runs after pivot table handlers
+    setTimeout(function() {
+        $('.pvtAxisContainer li span.pvtAttr').each(function() {
+            const $span = $(this);
+            const $li = $span.parent();
+            
+            // Remove existing click handlers from the span
+            $span.off('click touchend');
+            
+            // Function to handle filter activation
+            const activateFilter = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Don't trigger if we're dragging
+                if ($li.hasClass('ui-draggable-dragging')) {
+                    return false;
+                }
+                
+                // Get the column name from the parent li's text, removing any triangles or icons
+                const fullText = $li.text().trim();
+                const columnName = fullText.replace(/[▾▲▼⇅↕↔🔍]/g, '').trim();
+                
+                log(`Custom filter activated on: ${columnName}`, 'info');
+                log(`Current data has ${currentData.length} rows`, 'info');
+                
+                if (columnName && currentData.length > 0) {
+                    // Check if this column exists in the data
+                    if (currentData[0].hasOwnProperty(columnName)) {
+                        // Use the original unfiltered data for column analysis
+                        const analysis = analyzeColumn(columnName, currentData);
+                        log(`Column analysis: ${analysis.uniqueValues.length} unique values`, 'info');
+                        createFilterDropdown(columnName, analysis, $li[0]);
+                    } else {
+                        log(`Column "${columnName}" not found in data. Available columns: ${Object.keys(currentData[0]).join(', ')}`, 'error');
+                        showToast(`Column "${columnName}" not found in data`);
+                    }
+                }
+                
+                return false;
+            };
+            
+            // Add both click and touch handlers
+            $span.on('click.customFilter', activateFilter);
+            
+            // For mobile, we need to handle touch events
+            let touchStartTime;
+            let touchStartX;
+            let touchStartY;
+            
+            $span.on('touchstart.customFilter', function(e) {
+                touchStartTime = Date.now();
+                const touch = e.originalEvent.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            });
+            
+            $span.on('touchend.customFilter', function(e) {
+                e.preventDefault(); // Prevent default touch behavior
+                
+                const touchEndTime = Date.now();
+                const touchDuration = touchEndTime - touchStartTime;
+                
+                // If it's a quick tap (not a long press for dragging)
+                if (touchDuration < 500) {
+                    const touch = e.originalEvent.changedTouches[0];
+                    const touchEndX = touch.clientX;
+                    const touchEndY = touch.clientY;
+                    
+                    // Check if the touch moved significantly (dragging)
+                    const distance = Math.sqrt(
+                        Math.pow(touchEndX - touchStartX, 2) + 
+                        Math.pow(touchEndY - touchStartY, 2)
+                    );
+                    
+                    if (distance < 10) { // Finger didn't move much, it's a tap
+                        activateFilter(e);
+                    }
+                }
+            });
+        });
         
-        if (activeFilters[columnName]) {
-            if ($indicator.length === 0) {
-                $(this).append('<span class="filter-indicator">🔍</span>');
-                $(this).addClass('has-filter');
-            }
-        } else {
-            $indicator.remove();
-            $(this).removeClass('has-filter');
-        }
-    });
+        // Also attach handlers to the li elements themselves for better mobile support
+        $('.pvtAxisContainer li').each(function() {
+            const $li = $(this);
+            
+            // Remove any existing direct click handlers on the li
+            $li.off('click.filterDirect touchend.filterDirect');
+            
+            // Add a direct handler as backup for mobile
+            $li.on('click.filterDirect', function(e) {
+                // Only trigger if the click is directly on the li (not on child elements)
+                if (e.target === this) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const fullText = $li.text().trim();
+                    const columnName = fullText.replace(/[▾▲▼⇅↕↔🔍]/g, '').trim();
+                    
+                    log(`Direct li click on: ${columnName}`, 'info');
+                    
+                    if (columnName && currentData.length > 0 && currentData[0].hasOwnProperty(columnName)) {
+                        const analysis = analyzeColumn(columnName, currentData);
+                        createFilterDropdown(columnName, analysis, $li[0]);
+                    }
+                }
+            });
+        });
+        
+        log(`Attached custom filter handlers to ${$('.pvtAxisContainer li span.pvtAttr').length} elements`, 'info');
+    }, 100);
 }
 
 // Update visual indicators for filtered columns
 function updateFilterIndicators() {
     $('.pvtAxisContainer li').each(function() {
-        const columnName = $(this).text().trim();
+        const rawText = $(this).text().trim();
+        const columnName = rawText.replace(/[▾▲▼⇅↕↔🔍]/g, '').trim();
         const $indicator = $(this).find('.filter-indicator');
         
         if (activeFilters[columnName]) {
@@ -760,16 +834,29 @@ function addTouchSupport() {
     // Make draggable elements more touch-friendly
     $('.pvtAxisContainer li').css({
         'cursor': 'move',
-        'touch-action': 'none',
+        'touch-action': 'manipulation', // Changed from 'none' to allow taps
         'user-select': 'none',
         '-webkit-user-select': 'none',
         'padding': '10px',
-        'margin': '3px'
+        'margin': '3px',
+        '-webkit-tap-highlight-color': 'rgba(0,0,0,0)' // Remove tap highlight on iOS
     });
     
-    // Ensure touch punch is working
-    if ($.support.touch) {
+    // Ensure jQuery UI touch punch is working
+    if (typeof $.support !== 'undefined' && $.support.touch) {
         $('.pvtAxisContainer li').draggable('option', 'touch', true);
+    }
+    
+    // Add specific mobile event handling
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        log('Touch device detected, enhancing mobile support', 'info');
+        
+        // Make filter areas more touch-friendly
+        $('.pvtAxisContainer li span.pvtAttr').css({
+            'padding': '5px',
+            'display': 'inline-block',
+            'width': '100%'
+        });
     }
 }
 
@@ -866,7 +953,8 @@ $(window).on('resize', function() {
                     width: Math.min(window.innerWidth - 80, 800),
                     height: 400
                 };
-                renderPivotTable(currentData);
+                const filteredData = applyAllFilters(currentData);
+                renderPivotTableWithData(filteredData);
             }
         }
     }, 250);

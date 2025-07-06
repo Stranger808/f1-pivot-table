@@ -1,13 +1,13 @@
 # Dependencies
 node_modules/
-package-lock.json
+#package-lock.json
 
 # OS files
 .DS_Store
 Thumbs.db
 
 # IDE files
-#.vscode/
+.vscode/
 #.idea/
 
 # Logs
@@ -15,7 +15,7 @@ Thumbs.db
 npm-debug.log*
 
 # Environment variables
-#.env
+.env
 #.env.local
 
 # Temporary files
