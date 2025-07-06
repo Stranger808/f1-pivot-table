@@ -1,10 +1,11 @@
 // config.js - Configuration settings for PivotTable app
 
+
 const APP_CONFIG = {
     // Server configuration
     server: {
         localPort: 8080,
-        jsonServerPort: 3000,
+        jsonServerPort: 8899,
         pythonServerPort: 8000
     },
     
@@ -103,7 +104,9 @@ const Utils = {
     }
 };
 
+
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { APP_CONFIG, Utils };
+    module.exports = { APP_CONFIG, Utils};
 }

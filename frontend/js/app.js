@@ -1,4 +1,4 @@
-// app.js - Main application logic for PivotTable app
+// app.js - Main application logic for PivotTable app with backend integration
 
 // Global variables
 let currentData = [];
@@ -31,6 +31,12 @@ function showToast(message, duration = 3000) {
     }, duration);
 }
 
+// Get API base URL
+function getApiUrl() {
+    // Use the proxy path through the frontend server
+    return '/api';
+}
+
 // Check server connection
 async function checkServerConnection() {
     try {
@@ -46,6 +52,76 @@ async function checkServerConnection() {
         document.querySelector('.status-dot').style.backgroundColor = '#ffaa00';
         log('Running in standalone mode', 'info');
         return false;
+    }
+}
+
+// Load default query from backend
+async function loadDefaultQueryFromBackend() {
+    try {
+        const response = await fetch(`${getApiUrl()}/default-query`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch default query');
+        }
+        const data = await response.json();
+        return data.query;
+    } catch (error) {
+        log(`Error loading default query: ${error.message}`, 'error');
+        return null;
+    }
+}
+
+// Execute query on backend
+async function executeBackendQuery(query) {
+    try {
+        const response = await fetch(`${getApiUrl()}/submit-input`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ input: query })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Query execution failed');
+        }
+        
+        const data = await response.json();
+        return data.rows || [];
+    } catch (error) {
+        log(`Error executing query: ${error.message}`, 'error');
+        showToast('Error executing backend query');
+        return null;
+    }
+}
+
+// Load data from backend server
+async function loadFromServer() {
+    log('Loading data from backend server...', 'info');
+    showToast('Connecting to backend...');
+    
+    // First, get the default query
+    const defaultQuery = await loadDefaultQueryFromBackend();
+    if (!defaultQuery) {
+        log('Could not load default query from backend', 'error');
+        showToast('Failed to connect to backend', 3000);
+        return;
+    }
+    
+    log('Default query loaded, executing...', 'info');
+    
+    // Execute the default query
+    const results = await executeBackendQuery(defaultQuery);
+    if (results && results.length > 0) {
+        renderPivotTable(results);
+        log(`Loaded ${results.length} records from backend database`, 'success');
+        showToast(`Loaded ${results.length} records from database!`);
+        
+        // Update server info
+        document.getElementById('serverInfo').textContent = 'Backend connected';
+        document.querySelector('.status-dot').style.backgroundColor = '#00ff00';
+    } else {
+        log('No results returned from backend query', 'error');
+        showToast('Query returned no results', 3000);
     }
 }
 
@@ -110,26 +186,6 @@ function generateSampleData() {
     });
     
     return data;
-}
-
-// Load data from server
-async function loadFromServer() {
-    log('Checking for server data...', 'info');
-    
-    try {
-        // Try JSON server first
-        const response = await fetch('http://localhost:3000/data');
-        if (response.ok) {
-            const data = await response.json();
-            renderPivotTable(data);
-            log(`Loaded ${data.length} records from JSON server`, 'success');
-            showToast('Server data loaded!');
-            return;
-        }
-    } catch (error) {
-        log('JSON server not available', 'error');
-        showToast('No server data available', 3000);
-    }
 }
 
 // Handle file upload
@@ -810,8 +866,7 @@ $(window).on('resize', function() {
                     width: Math.min(window.innerWidth - 80, 800),
                     height: 400
                 };
-                const filteredData = applyAllFilters(currentData);
-                renderPivotTableWithData(filteredData);
+                renderPivotTable(currentData);
             }
         }
     }, 250);
@@ -844,6 +899,9 @@ $(document).ready(function() {
             }
         }
     });
+    
+    // Automatically load from backend on startup
+    loadFromServer();
 });
 
 // Make functions globally accessible for onclick handlers

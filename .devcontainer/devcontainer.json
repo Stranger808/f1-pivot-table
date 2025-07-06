@@ -1,0 +1,34 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+	"name": "F1-Pivot-Table",
+	"build": {
+	  "dockerfile": "Dockerfile"
+	},
+	"runArgs": ["-p", "8899:8899"],
+	// Only forward ports that this container actually serves
+	"forwardPorts": [8000, 8080, 8899],
+	"portsAttributes": {
+		"8899": {
+			"label": "F1 Pivot Proxy",
+			"onAutoForward": "notify"
+		},
+		"8000": {
+			"label": "FastAPI Backend", 
+			"onAutoForward": "silent"
+		},
+		"8080": {
+			"label": "Frontend Dev",
+			"onAutoForward": "silent"
+		},
+		"5432": {
+			"label": "PostgreSQL (External)",
+			"onAutoForward": "ignore"
+		}
+	},
+	"remoteUser": "vscode",
+	"postCreateCommand": "cd backend && poetry lock && poetry install --no-root",
+	"features": {
+	  "ghcr.io/devcontainers/features/common-utils:2": {}
+	}
+}
