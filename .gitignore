@@ -7,6 +7,8 @@ node_modules/
 Thumbs.db
 
 # IDE files
+"frontend copy/"
+older_versions/
 #.vscode/
 #.idea/
 
