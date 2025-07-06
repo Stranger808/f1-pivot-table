@@ -410,5 +410,80 @@
             }
         }
     </style>
+    <!-- Replace the previous inline test script with this more comprehensive one -->
+<script>
+    console.log('=== Debug script starting ===');
+    
+    // Check if app.js loaded
+    window.addEventListener('load', function() {
+        console.log('=== Checking app.js status ===');
+        console.log('typeof log function:', typeof window.log);
+        console.log('typeof loadSampleData:', typeof window.loadSampleData);
+        console.log('typeof loadFromServer:', typeof window.loadFromServer);
+        
+        // If app.js didn't load, let's create a minimal log function
+        if (typeof window.log === 'undefined') {
+            console.error('app.js did not load! Creating fallback log function...');
+            
+            window.log = function(message, type = 'log') {
+                const timestamp = new Date().toLocaleTimeString();
+                const consoleOutput = document.getElementById('consoleOutput');
+                
+                if (consoleOutput) {
+                    const entry = document.createElement('div');
+                    entry.className = `console-${type}`;
+                    entry.textContent = `[${timestamp}] ${message}`;
+                    consoleOutput.appendChild(entry);
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }
+                
+                console[type](`[${timestamp}] ${message}`);
+            };
+            
+            // Test the fallback
+            window.log('Fallback log function created', 'success');
+            window.log('app.js failed to load - check the file path!', 'error');
+        }
+        
+        // Check the script tag
+        const scripts = document.querySelectorAll('script');
+        let foundAppJs = false;
+        scripts.forEach(script => {
+            if (script.src.includes('app.js')) {
+                console.log('Found app.js script tag:', script.src);
+                foundAppJs = true;
+                
+                // Try to load it manually
+                fetch(script.src)
+                    .then(response => {
+                        console.log('app.js fetch status:', response.status);
+                        if (!response.ok) {
+                            console.error('app.js returned status:', response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        console.log('app.js file size:', text.length, 'characters');
+                        // Check for syntax errors by trying to create a function
+                        try {
+                            new Function(text);
+                            console.log('app.js syntax appears valid');
+                        } catch (e) {
+                            console.error('app.js has syntax error:', e.message);
+                            console.error('Error at:', e.stack);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Failed to fetch app.js:', err);
+                    });
+            }
+        });
+        
+        if (!foundAppJs) {
+            console.error('No script tag found for app.js!');
+        }
+    });
+</script>
+
 </body>
 </html>

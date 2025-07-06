@@ -11,14 +11,28 @@ let refreshTimeout = null; // Timeout for resetting refresh flag
 function log(message, type = 'log') {
     const timestamp = new Date().toLocaleTimeString();
     const consoleOutput = document.getElementById('consoleOutput');
+    
+    // Check if console output exists
+    if (!consoleOutput) {
+        console.error('Console output element not found!');
+        console.log(`[${timestamp}] ${message}`);
+        return;
+    }
+    
     const entry = document.createElement('div');
     entry.className = `console-${type}`;
     entry.textContent = `[${timestamp}] ${message}`;
     consoleOutput.appendChild(entry);
-    consoleOutput.scrollTop = consoleOutput.scrollHeight;
     
-    // Also log to browser console
-    console[type](message);
+    // Force scroll to bottom after a tiny delay to ensure DOM update
+    setTimeout(() => {
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }, 10);
+    
+    // Also log to browser console - validate type first
+    const validTypes = ['log', 'error', 'warn', 'info', 'debug'];
+    const consoleType = validTypes.includes(type) ? type : 'log';
+    console[consoleType](`[${timestamp}] ${message}`);
 }
 
 // Toast notification
