@@ -59,60 +59,63 @@
 <body>
     <div class="container">
         <header>
-            <h1>PivotTable Analytics</h1>
-            <div class="connection-status" id="connectionStatus">
-                <span class="status-dot"></span>
-                <span class="status-text">Local Server</span>
-            </div>
+            <h1>F1 Pivot</h1>
         </header>
-        
-        <div class="controls">
-            <div class="control-group">
-                <button class="btn btn-primary" onclick="loadSampleData()">
-                    <i class="icon">📊</i> Sample Data
-                </button>
-                <button class="btn btn-secondary" onclick="loadFromServer()">
-                    <i class="icon">🔄</i> Server Data
-                </button>
-                <button class="btn btn-danger" onclick="resetPivot()">
-                    <i class="icon">🔄</i> Reset
-                </button>
-            </div>
-            
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept=".csv,.xlsx,.json" onchange="handleFileUpload(event)" multiple>
-                <label for="fileInput" class="file-input-label">
-                    <i class="icon">📁</i> Upload Files (CSV/Excel/JSON)
-                </label>
-            </div>
-            
-            <div class="control-group">
-                <button class="btn btn-info" onclick="saveConfiguration()">
-                    <i class="icon">💾</i> Save Config
-                </button>
-                <button class="btn btn-info" onclick="loadConfiguration()">
-                    <i class="icon">📂</i> Load Config
-                </button>
-            </div>
-        </div>
-        
-        <div class="info-panel" id="infoPanel">
-            <div class="info-item">
-                <strong>Records:</strong> <span id="recordCount">0</span>
-            </div>
-            <div class="info-item">
-                <strong>Columns:</strong> <span id="columnCount">0</span>
-            </div>
-            <div class="info-item">
-                <strong>Server:</strong> <span id="serverInfo">Not connected</span>
-            </div>
-        </div>
         
         <div id="output">
             <div class="loading">
                 <div class="spinner"></div>
                 <p>Ready to analyze your data</p>
                 <p class="sub-text">Load sample data or upload your own files</p>
+            </div>
+        </div>
+        
+        <div class="bottom-section;">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Local Server</span>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <button class="btn btn-primary" onclick="loadSampleData()">
+                        <i class="icon">📊</i> Sample Data
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadFromServer()">
+                        <i class="icon">🗄️</i> Database Query
+                    </button>
+                    <button class="btn btn-danger" onclick="resetPivot()">
+                        <i class="icon">🔄</i> Reset
+                    </button>
+                </div>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".csv,.xlsx,.json" onchange="handleFileUpload(event)" multiple>
+                    <label for="fileInput" class="file-input-label">
+                        <i class="icon">📁</i> Upload Files (CSV/Excel/JSON)
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <button class="btn btn-info" onclick="saveConfiguration()">
+                        <i class="icon">💾</i> Save Config
+                    </button>
+                    <button class="btn btn-info" onclick="loadConfiguration()">
+                        <i class="icon">📂</i> Load Config
+                    </button>
+                </div>
+            </div>
+            
+            <div class="info-panel" id="infoPanel">
+                <div class="info-item">
+                    <strong>Records:</strong> <span id="recordCount">0</span>
+                </div>
+                <div class="info-item">
+                    <strong>Columns:</strong> <span id="columnCount">0</span>
+                </div>
+                <div class="info-item">
+                    <strong>Server:</strong> <span id="serverInfo">Not connected</span>
+                </div>
             </div>
         </div>
         
@@ -148,9 +151,6 @@
         }
         
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             padding: 15px 0;
             border-bottom: 2px solid #1a1a25;
             margin-bottom: 20px;
@@ -160,18 +160,26 @@
             margin: 0;
             font-size: 24px;
             background: linear-gradient(45deg, #00d4ff, #0099ff);
-            -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        
+        .bottom-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #1a1a25;
         }
         
         .connection-status {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 5px 15px;
             background: #1a1a25;
             border-radius: 20px;
             font-size: 12px;
+            margin-bottom: 15px;
         }
         
         .status-dot {
@@ -293,6 +301,7 @@
             border-radius: 8px;
             padding: 20px;
             min-height: 400px;
+            max-height: 75vh;
             overflow: auto;
         }
         
@@ -378,12 +387,6 @@
         
         /* Mobile optimizations */
         @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
             .controls {
                 flex-direction: column;
             }
@@ -407,5 +410,80 @@
             }
         }
     </style>
+    <!-- Replace the previous inline test script with this more comprehensive one -->
+<script>
+    console.log('=== Debug script starting ===');
+    
+    // Check if app.js loaded
+    window.addEventListener('load', function() {
+        console.log('=== Checking app.js status ===');
+        console.log('typeof log function:', typeof window.log);
+        console.log('typeof loadSampleData:', typeof window.loadSampleData);
+        console.log('typeof loadFromServer:', typeof window.loadFromServer);
+        
+        // If app.js didn't load, let's create a minimal log function
+        if (typeof window.log === 'undefined') {
+            console.error('app.js did not load! Creating fallback log function...');
+            
+            window.log = function(message, type = 'log') {
+                const timestamp = new Date().toLocaleTimeString();
+                const consoleOutput = document.getElementById('consoleOutput');
+                
+                if (consoleOutput) {
+                    const entry = document.createElement('div');
+                    entry.className = `console-${type}`;
+                    entry.textContent = `[${timestamp}] ${message}`;
+                    consoleOutput.appendChild(entry);
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }
+                
+                console[type](`[${timestamp}] ${message}`);
+            };
+            
+            // Test the fallback
+            window.log('Fallback log function created', 'success');
+            window.log('app.js failed to load - check the file path!', 'error');
+        }
+        
+        // Check the script tag
+        const scripts = document.querySelectorAll('script');
+        let foundAppJs = false;
+        scripts.forEach(script => {
+            if (script.src.includes('app.js')) {
+                console.log('Found app.js script tag:', script.src);
+                foundAppJs = true;
+                
+                // Try to load it manually
+                fetch(script.src)
+                    .then(response => {
+                        console.log('app.js fetch status:', response.status);
+                        if (!response.ok) {
+                            console.error('app.js returned status:', response.status);
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        console.log('app.js file size:', text.length, 'characters');
+                        // Check for syntax errors by trying to create a function
+                        try {
+                            new Function(text);
+                            console.log('app.js syntax appears valid');
+                        } catch (e) {
+                            console.error('app.js has syntax error:', e.message);
+                            console.error('Error at:', e.stack);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Failed to fetch app.js:', err);
+                    });
+            }
+        });
+        
+        if (!foundAppJs) {
+            console.error('No script tag found for app.js!');
+        }
+    });
+</script>
+
 </body>
 </html>

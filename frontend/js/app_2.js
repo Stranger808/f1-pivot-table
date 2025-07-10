@@ -580,6 +580,3 @@ function clearFilter(columnName) {
     showToast('Filter cleared');
 }
 
-// Apply all active filters to data
-function applyAllFilters(data) {
-    if (Obj
